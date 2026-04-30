@@ -21,19 +21,19 @@ class NabMastodond(NabService, asyncio.Protocol, StreamListener):
     NABPAIRING_MESSAGE_RE = (
         r"NabPairing (?P<cmd>Proposal|Acceptation|Rejection|Divorce|Ears "
         r'(?P<left>[0-9]+) (?P<right>[0-9]+)) - (?:<a href=")?'
-        r"https://github.com/nabaztag2018/pynab"
+        r"https://github.com/AntorFr/pynab-ha"
     )
     PROTOCOL_MESSAGES = {
         "proposal": "Would you accept to be my spouse? "
-        "(NabPairing Proposal - https://github.com/nabaztag2018/pynab)",
+        "(NabPairing Proposal - https://github.com/AntorFr/pynab-ha)",
         "acceptation": "Oh yes, I do accept to be your spouse "
-        "(NabPairing Acceptation - https://github.com/nabaztag2018/pynab)",
+        "(NabPairing Acceptation - https://github.com/AntorFr/pynab-ha)",
         "rejection": "Sorry, I cannot be your spouse right now "
-        "(NabPairing Rejection - https://github.com/nabaztag2018/pynab)",
+        "(NabPairing Rejection - https://github.com/AntorFr/pynab-ha)",
         "divorce": "I think we should split. Can we skip the lawyers? "
-        "(NabPairing Divorce - https://github.com/nabaztag2018/pynab)",
+        "(NabPairing Divorce - https://github.com/AntorFr/pynab-ha)",
         "ears": "Let's dance (NabPairing Ears {left} {right} - "
-        "https://github.com/nabaztag2018/pynab)",
+        "https://github.com/AntorFr/pynab-ha)",
     }
 
     def __init__(self):

@@ -9,19 +9,16 @@ async def close_old_async_connections_async():
 
 
 def close_old_async_connections():
-    event_loop = None
     try:
-        event_loop = asyncio.get_event_loop()
+        asyncio.get_running_loop()
     except RuntimeError:
-        pass
-    else:
-        if not event_loop.is_running():
-            event_loop = None
-    if event_loop:
-        loop = event_loop
-    else:
         loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    loop.run_until_complete(close_old_async_connections_async())
-    if not event_loop:
-        loop.close()
+        try:
+            loop.run_until_complete(close_old_async_connections_async())
+        finally:
+            loop.close()
+    else:
+        raise RuntimeError(
+            "close_old_async_connections() cannot be called from a running "
+            "event loop; use close_old_async_connections_async() instead."
+        )

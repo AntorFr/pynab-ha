@@ -4,7 +4,6 @@ import sys
 import time
 import unittest
 
-import asynctest  # type: ignore
 import pytest
 
 from .utils import close_old_async_connections
@@ -85,7 +84,7 @@ class TestPlaySound(unittest.TestCase):
     def test_stream_mp3(self):
         start_task = self.loop.create_task(
             self.sound.start_playing(
-                "https://github.com/nabaztag2018/pynab/raw/master/nabd/"
+                "https://github.com/AntorFr/pynab-ha/raw/master/nabd/"
                 "sounds/choreographies/3notesE5A5C6.mp3"
             )
         )
@@ -98,7 +97,7 @@ class TestPlaySound(unittest.TestCase):
     sys.platform != "linux", reason="Alsa is only available on Linux"
 )
 @pytest.mark.django_db
-class TestWaitUntilComplete(asynctest.TestCase):
+class TestWaitUntilComplete(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         from nabd.nabio import NabIO
         from nabd.sound_alsa import SoundAlsa
@@ -139,7 +138,7 @@ class TestWaitUntilComplete(asynctest.TestCase):
         before = time.time()
         await self.sound.start_playing("fr_FR/asr/failed/5.mp3")
         event = asyncio.Event()
-        self.loop.call_later(1.5, lambda: event.set())
+        asyncio.get_running_loop().call_later(1.5, lambda: event.set())
         await self.sound.wait_until_done(event)
         after = time.time()
         self.assertLess(after - before, 3.0)

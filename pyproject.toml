@@ -1,3 +1,6 @@
+[project]
+requires-python = ">=3.13,<3.15"
+
 [tool.black]
 line-length = 79
 
@@ -7,6 +10,10 @@ exclude = [
     "migrations"
 ]
 namespace_packages = true
+
+[[tool.mypy.overrides]]
+module = ["numpy"]
+ignore_missing_imports = true
 
 [tool.django-stubs]
 django_settings_module = "nabweb.settings"

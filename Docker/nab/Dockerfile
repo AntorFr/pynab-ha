@@ -1,4 +1,4 @@
-FROM python:3.7-bullseye
+FROM python:3.13-bookworm
 
 RUN apt-get update && apt-get install -y \
     postgresql-client gettext \
@@ -38,15 +38,13 @@ USER tagtagtag
 WORKDIR /opt/pynab
 
 ENV VIRTUAL_ENV=/opt/venv
-RUN python3.7 -m venv ${VIRTUAL_ENV}
+RUN python3 -m venv ${VIRTUAL_ENV}
 ENV PATH=${VIRTUAL_ENV}/bin:${PATH}
 
 COPY requirements.txt /tmp/requirements.txt
-# No ASR in virtual environment
-RUN grep -v -e py-kaldi-asr -e snips-nlu < /tmp/requirements.txt > /tmp/requirements_docker.txt
 
 RUN ${VIRTUAL_ENV}/bin/pip install wheel
-RUN ${VIRTUAL_ENV}/bin/pip install -r /tmp/requirements_docker.txt
+RUN ${VIRTUAL_ENV}/bin/pip install -r /tmp/requirements.txt
 
 ENV NABD_HOST=pynab
 ENV NABD_PORT_NUMBER=10543

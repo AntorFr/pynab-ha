@@ -2,7 +2,6 @@ import asyncio
 import base64
 import unittest
 
-import asynctest  # type: ignore
 import pytest
 
 from nabd.choreography import ChoreographyInterpreter
@@ -117,7 +116,7 @@ class TestChoreographyInterpreter(TestChoreographyBase):
         self.assertEqual(self.sound.called_list, [])
 
 
-class TestCancelEvent(asynctest.TestCase):
+class TestCancelEvent(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.leds = LedsMock()
         self.ears = EarsMock()
@@ -163,7 +162,7 @@ class TestCancelEvent(asynctest.TestCase):
         )
         await self.ci.start(chor)
         event = asyncio.Event()
-        self.loop.call_later(0.1, lambda: event.set())
+        asyncio.get_running_loop().call_later(0.1, lambda: event.set())
         await self.ci.wait_until_complete(event)
         self.assertEqual(self.leds.called_list, [])
         self.assertEqual(self.ears.called_list, [])

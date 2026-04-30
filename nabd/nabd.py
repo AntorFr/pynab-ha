@@ -12,7 +12,7 @@ import sys
 import time
 import traceback
 from enum import Enum
-from typing import Deque, Dict, List, Optional, Tuple, Type, Union, cast
+from typing import Any, Deque, Dict, List, Optional, Tuple, Type, Union, cast
 
 import dateutil.parser
 from lockfile import AlreadyLocked, LockFailed  # type: ignore
@@ -125,30 +125,46 @@ class Nabd:
         self.playing_cancelable = False
         self.playing_request_id: Optional[str] = None
         Nabd.leds_boot(self.nabio, 2)
+        self.asr: Optional[Any] = None
+        self.nlu: Optional[Any] = None
         if self.nabio.has_sound_input():
-            from . import i18n
-            from .asr import ASR
-            from .nlu import NLU
+            try:
+                from . import i18n
+                from .asr import ASR
+                from .nlu import NLU
 
-            config = i18n.Config.load()
-            self._asr_locale = ASR.get_locale(config.locale)
-            self.asr: Optional[ASR] = ASR(self._asr_locale)
-            Nabd.leds_boot(self.nabio, 3)
-            self._nlu_locale = NLU.get_locale(config.locale)
-            self.nlu: Optional[NLU] = NLU(self._nlu_locale)
-            Nabd.leds_boot(self.nabio, 4)
-        else:
-            self.asr = None
-            self.nlu = None
+                config = i18n.Config.load()
+                self._asr_locale = ASR.get_locale(config.locale)
+                self.asr = ASR(self._asr_locale)
+                Nabd.leds_boot(self.nabio, 3)
+                self._nlu_locale = NLU.get_locale(config.locale)
+                self.nlu = NLU(self._nlu_locale)
+                Nabd.leds_boot(self.nabio, 4)
+            except ImportError as exc:
+                logging.warning(
+                    "Local ASR/NLU disabled: legacy Snips/Kaldi "
+                    "dependencies are not installed (%s)",
+                    exc,
+                )
 
     async def reload_config(self):
         """
         Reload configuration.
         """
         if self.nabio.has_sound_input():
-            from . import i18n
-            from .asr import ASR
-            from .nlu import NLU
+            try:
+                from . import i18n
+                from .asr import ASR
+                from .nlu import NLU
+            except ImportError as exc:
+                logging.warning(
+                    "Local ASR/NLU disabled: legacy Snips/Kaldi "
+                    "dependencies are not installed (%s)",
+                    exc,
+                )
+                self.asr = None
+                self.nlu = None
+                return
 
             config = await i18n.Config.load_async()
             new_asr_locale = ASR.get_locale(config.locale)
@@ -326,8 +342,8 @@ class Nabd:
                     raise RuntimeError(f"Unexpected packet {item[0]}")
 
     def is_past(self, isodatestr):
-        # Python 3.7's fromisoformat only parses output of isoformat, not all
-        # valid ISO 8601 dates.
+        # fromisoformat only parses output of isoformat, not all valid ISO 8601
+        # dates on older Python versions kept by historical deployments.
         parsed = dateutil.parser.isoparse(isodatestr)
         if parsed.tzinfo:
             return parsed < datetime.datetime.now().astimezone()
@@ -1028,7 +1044,12 @@ class Nabd:
         """
         Thread: run_loop
         """
-        if button_event == "hold" and self.state == State.IDLE:
+        if (
+            button_event == "hold"
+            and self.state == State.IDLE
+            and self.asr is not None
+            and self.nlu is not None
+        ):
             asyncio.ensure_future(self.start_asr())
         elif button_event == "up" and self.state == State.RECORDING:
             asyncio.ensure_future(self.stop_asr())

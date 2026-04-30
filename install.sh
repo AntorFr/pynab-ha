@@ -16,6 +16,9 @@ test=0
 # upgrade : this script is invoked from upgrade.sh, typically from the button in the web interface.
 upgrade=0
 
+min_py_major=3
+min_py_minor=13
+
 if [ "${1:-}" == "--makerfaire2018" ]; then
   makerfaire2018=1
   shift
@@ -85,7 +88,7 @@ build_and_install_driver() {
 }
 
 if [ $upgrade -eq 1 -a $makerfaire2018 -eq 0 -a -d ${inst_dir}/wm8960 ]; then
-  echo "Updating sound driver - 2/14" > /tmp/pynab.upgrade
+  echo "Updating sound driver - 2/12" > /tmp/pynab.upgrade
   cd ${inst_dir}/wm8960
   sudo chown -R ${uid}:${gid} .
   pull=`git pull`
@@ -96,7 +99,7 @@ if [ $upgrade -eq 1 -a $makerfaire2018 -eq 0 -a -d ${inst_dir}/wm8960 ]; then
 fi
 
 if [ $upgrade -eq 1 ]; then
-  echo "Updating ears driver - 3/14" > /tmp/pynab.upgrade
+  echo "Updating ears driver - 3/12" > /tmp/pynab.upgrade
   if [ -d ${inst_dir}/tagtagtag-ears ]; then
     cd ${inst_dir}/tagtagtag-ears
     sudo chown -R ${uid}:${gid} .
@@ -121,7 +124,7 @@ else
 fi
 
 if [ $upgrade -eq 1 ]; then
-  echo "Updating RFID drivers - 4/14" > /tmp/pynab.upgrade
+  echo "Updating RFID drivers - 4/12" > /tmp/pynab.upgrade
   if [ -d ${inst_dir}/cr14 ]; then
     cd ${inst_dir}/cr14
     sudo chown -R ${uid}:${gid} .
@@ -166,7 +169,7 @@ else
 fi
 
 if [ $upgrade -eq 1 ]; then
-  echo "Updating NabBlockly - 5/14" > /tmp/pynab.upgrade
+  echo "Updating NabBlockly - 5/12" > /tmp/pynab.upgrade
   if [ -d ${root_dir}/nabblockly ]; then
     cd ${root_dir}/nabblockly
     sudo chown -R ${uid}:${gid} .
@@ -183,69 +186,47 @@ else
   fi
 fi
 
-cd ${inst_dir}
-if [ $makerfaire2018 -eq 0 ]; then
-  if [ $upgrade -eq 1 ]; then
-    echo "Updating ASR models - 6/14" > /tmp/pynab.upgrade
-  fi
-
-  # Maker Faire card has no mic, no need to install Kaldi
-  kaldi_release="e4940d045"
-  kaldi_dir="/opt/kaldi"; kaldi_pkgconfig="/usr/lib/pkgconfig/kaldi-asr.pc"
-  if [[ -f "${kaldi_pkgconfig}" && "$(grep -c ${kaldi_release} ${kaldi_pkgconfig})" -eq 0 ]]; then
-     # Installed Kaldi does not match needed version: remove it
-     sudo rm -rf "${kaldi_dir}"
-  fi
-  if [ ! -d "${kaldi_dir}" ]; then
-    kaldi_platform=$(. /etc/os-release && echo "$ID$VERSION_ID-`uname -m`")
-    if [ "${kaldi_platform}" = "debian11-armv7l" ]; then
-      # (nasty) DietPi patch: debian11 version not available for armv7l
-      kaldi_platform="raspbian11-armv7l"
-    fi
-    # When running in 32 bits mode, maintain Pi Zero compatibility
-    if [ "${kaldi_platform}" = "raspbian10-armv7l" ]; then
-      kaldi_platform="raspbian10-armv6l"
-    fi
-    if [ "${kaldi_platform}" = "raspbian11-armv7l" ]; then
-      kaldi_platform="raspbian11-armv6l"
-    fi
-    echo "Installing precompiled ${kaldi_platform} Kaldi into ${kaldi_dir}"
-    kaldi_archive="${kaldi_release}/kaldi-${kaldi_release}-linux_${kaldi_platform}.tar.xz"
-    wget -O - -q https://github.com/pguyot/kaldi/releases/download/${kaldi_archive} | sudo tar xJ -C /
-    sudo ldconfig
-
-    # Fix upgrade of py-kaldi-asr
-    pushd ${root_dir}
-    if [[ -f venv/lib/python3.7/site-packages/kaldiasr/nnet3.cpython-37m-arm-linux-gnueabihf.so && "$(grep -c ZN3fst8internal14DenseSymbolMapD1Ev venv/lib/python3.7/site-packages/kaldiasr/nnet3.cpython-37m-arm-linux-gnueabihf.so)" -ne 0 ]]; then
-        echo "Removing incompatible py-kaldi-asr package"
-        venv/bin/pip uninstall -y py-kaldi-asr
-    fi
-    popd
-  fi
-
-  sudo mkdir -p "${kaldi_dir}/model"
-
-  if [ ! -d "${kaldi_dir}/model/kaldi-nabaztag-en-adapt-r20191222" ]; then
-    echo "Installing Kaldi model for English"
-    sudo tar xJf ${root_dir}/asr/kaldi-nabaztag-en-adapt-r20191222.tar.xz -C ${kaldi_dir}/model/
-  fi
-
-  if [ ! -d "${kaldi_dir}/model/kaldi-nabaztag-fr-adapt-r20200203" ]; then
-    echo "Installing Kaldi model for French"
-    sudo tar xJf ${root_dir}/asr/kaldi-nabaztag-fr-adapt-r20200203.tar.xz -C ${kaldi_dir}/model/
-  fi
+cd ${root_dir}
+if [ $upgrade -eq 1 ]; then
+  echo "Checking Python runtime - 6/12" > /tmp/pynab.upgrade
 fi
 
-cd ${root_dir}
-if [ -x "$(command -v python3.9)" ] ; then
-  py_ver=3.9
-elif [ -x "$(command -v python3.7)" ] ; then
-  py_ver=3.7
+if [ -n "${PYNAB_PYTHON:-}" ]; then
+  python="${PYNAB_PYTHON}"
 else
-  echo "Please install Python 3.7 or 3.9 (you might need to upgrade your Linux distribution)"
+  python=""
+  for candidate in python3.14 python3.13 python3; do
+    if command -v "${candidate}" >/dev/null 2>&1 && "${candidate}" - <<PY
+import sys
+sys.exit(0 if sys.version_info >= (${min_py_major}, ${min_py_minor}) else 1)
+PY
+    then
+      python="${candidate}"
+      break
+    fi
+  done
+fi
+
+if [ -z "${python}" ] || ! command -v "${python}" >/dev/null 2>&1; then
+  echo "Please install Python ${min_py_major}.${min_py_minor}+ and its venv module"
+  echo "On Debian/Raspberry Pi OS this is typically python3, python3-venv and python3-dev from a recent release."
   exit 1
 fi
-python=python${py_ver}
+
+py_ver=$("${python}" - <<'PY'
+import sys
+print(f"{sys.version_info.major}.{sys.version_info.minor}")
+PY
+)
+if ! "${python}" - <<PY
+import sys
+sys.exit(0 if sys.version_info >= (${min_py_major}, ${min_py_minor}) else 1)
+PY
+then
+  echo "Python ${py_ver} is too old; Pynab now requires Python ${min_py_major}.${min_py_minor}+"
+  exit 1
+fi
+
 venv_cfg="venv/pyvenv.cfg"
 if [[ -f "${venv_cfg}" && "$(grep -c version\ =\ ${py_ver} ${venv_cfg})" -eq 0 ]]; then
    # Installed virtual env does not match needed version: remove it
@@ -258,42 +239,16 @@ fi
 
 echo "Installing PyPi requirements"
 if [ $upgrade -eq 1 ]; then
-  echo "Updating Python requirements - 7/14" > /tmp/pynab.upgrade
+  echo "Updating Python requirements - 7/12" > /tmp/pynab.upgrade
 fi
 # Start with wheel which is required to compile some of the other requirements
 venv/bin/pip install --no-cache-dir wheel
 venv/bin/pip install --no-cache-dir -r requirements.txt
 
-if [ $makerfaire2018 -eq 0 ]; then
-  if [ $upgrade -eq 1 ]; then
-    echo "Updating NLU models - 8/14" > /tmp/pynab.upgrade
-  fi
-
-  # maker faire card has no mic, no need to install snips
-  if [ ! -d "venv/lib/${python}/site-packages/snips_nlu_fr" ]; then
-    echo "Downloading Snips NLU models for French"
-    venv/bin/python -m snips_nlu download fr
-  fi
-
-  if [ ! -d "venv/lib/${python}/site-packages/snips_nlu_en" ]; then
-    echo "Downloading Snips NLU models for English"
-    venv/bin/python -m snips_nlu download en
-  fi
-
-  echo "Compiling Snips datasets"
-  mkdir -p nabd/nlu
-  venv/bin/python -m snips_nlu generate-dataset en */nlu/intent_en.yaml > nabd/nlu/nlu_dataset_en.json
-  venv/bin/python -m snips_nlu generate-dataset fr */nlu/intent_fr.yaml > nabd/nlu/nlu_dataset_fr.json
-
-  echo "Persisting Snips engines"
-  if [ -d nabd/nlu/engine_en ]; then
-    rm -rf nabd/nlu/engine_en
-  fi
-  venv/bin/snips-nlu train nabd/nlu/nlu_dataset_en.json nabd/nlu/engine_en
-  if [ -d nabd/nlu/engine_fr ]; then
-    rm -rf nabd/nlu/engine_fr
-  fi
-  venv/bin/snips-nlu train nabd/nlu/nlu_dataset_fr.json nabd/nlu/engine_fr
+if [ "${PYNAB_INSTALL_LEGACY_ASR:-0}" = "1" ]; then
+  echo "Legacy Snips/Kaldi ASR is not compatible with the modern Python ${py_ver} runtime."
+  echo "It has been split into requirements-asr-legacy.txt for reference until the Assist Satellite backend replaces it."
+  exit 1
 fi
 
 trust=`sudo grep local /etc/postgresql/*/main/pg_hba.conf | grep -cE '^local +all +all +trust' || echo -n ''`
@@ -336,7 +291,7 @@ if [ $upgrade -eq 0 ]; then
   fi
 else
   echo "Restarting Nginx"
-  echo "Restarting Nginx - 9/14" > /tmp/pynab.upgrade
+  echo "Restarting Nginx - 8/12" > /tmp/pynab.upgrade
   if [ -e '/etc/nginx/sites-enabled/pynab' ]; then
     sudo mv /tmp/nginx-site.conf /etc/nginx/sites-enabled/pynab
     sudo systemctl restart nginx
@@ -353,7 +308,7 @@ psql -U pynab -c '' 2>/dev/null || {
 
 echo "Updating data models"
 if [ $upgrade -eq 1 ]; then
-  echo "Updating data models - 10/14" > /tmp/pynab.upgrade
+  echo "Updating data models - 9/12" > /tmp/pynab.upgrade
 fi
 venv/bin/python manage.py migrate
 
@@ -363,7 +318,7 @@ echo "Updating localization messages"
 if [ $upgrade -eq 0 ]; then
   venv/bin/django-admin compilemessages ${all_locales}
 else
-  echo "Updating localization messages - 11/14" > /tmp/pynab.upgrade
+  echo "Updating localization messages - 10/12" > /tmp/pynab.upgrade
   for module in nab*/locale; do
     (
       cd `dirname ${module}`
@@ -388,7 +343,7 @@ fi
 # copy service files
 echo "Installing service files"
 if [ $upgrade -eq 1 ]; then
-  echo "Installing service files - 12/14" > /tmp/pynab.upgrade
+  echo "Installing service files - 11/12" > /tmp/pynab.upgrade
 fi
 for service_file in nabd/nabd.socket */*.service ; do
   name=`basename ${service_file}`
@@ -458,7 +413,7 @@ fi
 
 if [ -e /tmp/pynab.upgrade.reboot ]; then
   echo "Rebooting..."
-  echo "Upgrade requires reboot, rebooting now - 14/14" > /tmp/pynab.upgrade
+  echo "Upgrade requires reboot, rebooting now - 12/12" > /tmp/pynab.upgrade
   sudo rm -f /tmp/pynab.upgrade
   sudo rm -f /tmp/pynab.upgrade.reboot
   sudo reboot
@@ -466,7 +421,7 @@ else
   if [ $ci_chroot -eq 0 ]; then
     echo "Starting services"
     if [ $upgrade -eq 1 ]; then
-      echo "Restarting services - 13/14" > /tmp/pynab.upgrade
+      echo "Restarting services - 12/12" > /tmp/pynab.upgrade
     fi
     sudo systemctl restart logrotate.service || true
     sudo systemctl start nabd.socket
@@ -481,7 +436,7 @@ else
     done
 
     if [ $upgrade -eq 1 ]; then
-      echo "Restarting web site - 14/14" > /tmp/pynab.upgrade
+      echo "Restarting web site - 12/12" > /tmp/pynab.upgrade
       sudo systemctl restart nabweb.service
     else
       sudo systemctl start nabweb.service

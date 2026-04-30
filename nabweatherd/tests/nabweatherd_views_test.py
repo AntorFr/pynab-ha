@@ -28,7 +28,13 @@ class TestView(TestCase):
     PARIS_LOCATION_USERFRIENDLY = "Paris 14 - Île-de-France (75) - FR"
 
     def setUp(self):
-        Config.load()
+        config = Config.load()
+        config.location = TestView.PARIS_LOCATION
+        config.location_user_friendly = TestView.PARIS_LOCATION_USERFRIENDLY
+        config.unit = 1
+        config.next_performance_date = None
+        config.next_performance_type = None
+        config.save()
 
     def test_get_settings(self):
         c = Client()

@@ -8,12 +8,12 @@ ensure the contribution process is easy and effective for everyone involved.
 
 ### Reporting bugs
 
-Please **Check [existing issues](https://github.com/nabaztag2018/pynab/issues)** to make sure the
+Please **Check [existing issues](https://github.com/AntorFr/pynab-ha/issues)** to make sure the
 bug was not already reported. If you are running latest release, make sure the
 bug was not fixed on master branch by checking closed issues as well.
 
 If you're unable to find an open issue addressing the problem,
-[open a new one](https://github.com/nabaztag2018/pynab/issues/new). Be sure to include as much
+[open a new one](https://github.com/AntorFr/pynab-ha/issues/new). Be sure to include as much
 relevant information as possible, ideally providing a reproduceable test case
 demonstrating the expected behavior that is not occurring.
 
@@ -29,8 +29,8 @@ project and could simply exploit the [Nabd protocol](PROTOCOL.md) and be install
 
 If you intend to add a new feature or change an existing one, please engage
 discussion first about what you are proposing by filing
-[a new issue](https://github.com/nabaztag2018/pynab/issues/new) or discussing it on the
-[Discussions page](https://github.com/nabaztag2018/pynab/discussions).
+[a new issue](https://github.com/AntorFr/pynab-ha/issues/new) or discussing it on the
+[Discussions page](https://github.com/AntorFr/pynab-ha/discussions).
 
 ### Submitting patches
 
@@ -41,7 +41,7 @@ patches for existing issues / enhancements.
 ### Your first code contribution
 
 Unsure where to begin contributing to Pynab? You can start by looking at issues
-tagged [`good first issue`](https://github.com/nabaztag2018/pynab/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
+tagged [`good first issue`](https://github.com/AntorFr/pynab-ha/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
 They have been especially selected as they seem not too difficult at first
 sight.
 
@@ -115,7 +115,7 @@ messages, drivers and dependencies.
 
 ## How to test a contributor Pull Request
 
-1. Note the number *XXX* of the PR to test from the [Pull requests page](https://github.com/nabaztag2018/pynab/pulls).
+1. Note the number *XXX* of the PR to test from the [Pull requests page](https://github.com/AntorFr/pynab-ha/pulls).
 
 2. Go to the pynab folder on your rabbit: `cd $HOME/pynab`
 

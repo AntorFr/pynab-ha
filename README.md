@@ -1,9 +1,9 @@
 # Nabaztag en Python pour Raspberry Pi
 
-[![build (qemu)](https://github.com/nabaztag2018/pynab/actions/workflows/arm-runner.yml/badge.svg?branch=master)](https://github.com/nabaztag2018/pynab/actions/workflows/arm-runner.yml)
-[![tests](https://github.com/nabaztag2018/pynab/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/nabaztag2018/pynab/actions/workflows/tests.yml)
+[![build (qemu)](https://github.com/AntorFr/pynab-ha/actions/workflows/arm-runner.yml/badge.svg?branch=master)](https://github.com/AntorFr/pynab-ha/actions/workflows/arm-runner.yml)
+[![tests](https://github.com/AntorFr/pynab-ha/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/AntorFr/pynab-ha/actions/workflows/tests.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![codecov](https://codecov.io/gh/nabaztag2018/pynab/branch/master/graph/badge.svg)](https://codecov.io/gh/nabaztag2018/pynab)
+[![codecov](https://codecov.io/gh/AntorFr/pynab-ha/branch/master/graph/badge.svg)](https://codecov.io/gh/AntorFr/pynab-ha)
 [![Twitter](https://img.shields.io/twitter/follow/nabaztagtagtag?label=Follow&style=social)](https://twitter.com/nabaztagtagtag)
 
 ## Cartes
@@ -16,17 +16,17 @@ Les schémas et fichiers de fabrication de ces deux cartes sont dans le reposito
 
 ## Images
 
-Les [releases](https://github.com/nabaztag2018/pynab/releases) sont des images de [Raspberry Pi OS](https://www.raspberrypi.org/software/operating-systems/) Lite ou [DietPi](https://dietpi.com/) avec Pynab pré-installé.
+Les [releases](https://github.com/AntorFr/pynab-ha/releases) sont des images de [Raspberry Pi OS](https://www.raspberrypi.org/software/operating-systems/) Lite ou [DietPi](https://dietpi.com/) avec Pynab pré-installé.
 
-Les releases actuelles (>0.7.x) ne fonctionnent pas sur les cartes 2018 (cf [#44](https://github.com/nabaztag2018/pynab/issues/44)).
+Les releases actuelles (>0.7.x) ne fonctionnent pas sur les cartes 2018 (cf [#44](https://github.com/AntorFr/pynab-ha/issues/44)).
 
 ## Installation sur Raspberry Pi OS ou DietPi (pour développeurs!)
 
 ### 0. S'assurer que le système est bien à jour
 
-Le script d'installation requiert une version basée sur Debian 11 (Bullseye), avec Python 3.9.
+Le socle modernisé vise Python 3.13, Django 5.2 LTS et PostgreSQL 18.
 
-Debian 10 (Buster), avec Python 3.7 ([Raspberry Pi OS Legacy](https://www.raspberrypi.com/software/operating-systems/#raspberry-pi-os-legacy)), est aussi supporté.
+Le script d'installation cible maintenant un système récent avec Python 3.13+ et n'installe plus l'ancien stack vocal local Snips/Kaldi. Voir `docs/MODERNIZATION.md` pour le détail de la migration.
 
 Il est nécessaire que les 'kernel headers' installés via `apt-get` correspondent à la version installée du noyau.
 
@@ -65,7 +65,7 @@ sudo apt-get install alsa-utils xz-utils avahi-daemon
 ### 3. Récupérer le code
 
 ```sh
-git clone https://github.com/nabaztag2018/pynab.git
+git clone https://github.com/AntorFr/pynab-ha.git
 cd pynab
 ```
 

@@ -458,6 +458,7 @@ class NabWebHardwareTestView(View):
 
 
 class GitInfo:
+    EXPECTED_PYNAB_UPSTREAMS = {"origin/master", "origin/release"}
     REPOSITORIES = {
         "pynab": ".",
         "sound_driver": "../wm8960",
@@ -554,6 +555,10 @@ class GitInfo:
         )
         # note: upstream_branch will be "" if on purely local branch
         info["upstream_branch"] = upstream_branch
+        info["tracks_expected_upstream"] = (
+            repository != "pynab"
+            or upstream_branch in GitInfo.EXPECTED_PYNAB_UPSTREAMS
+        )
         remote = upstream_branch.split("/")[0]
         # note: url will be "" if on purely local branch
         info["url"] = (

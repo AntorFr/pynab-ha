@@ -1,14 +1,13 @@
-version: '2.0'
 services:
     # PostgreSQL database
     db:
         container_name: PostgreSQL
-        image: postgres:11-alpine
+        image: postgres:18-alpine
         security_opt:
           # See: https://wiki.alpinelinux.org/wiki/Release_Notes_for_Alpine_3.13.0#time64_requirements
           - seccomp:unconfined
         volumes:
-          - var-lib-postgresql-data:/var/lib/postgresql/data
+          - var-lib-postgresql-18:/var/lib/postgresql
           - var-run-postgresql:/var/run/postgresql
         environment:
           - POSTGRES_USER=pynab
@@ -37,4 +36,4 @@ volumes:
     # Share the PostgreSQL socket between containers
     var-run-postgresql:
     # Persist the PostgreSQL data across restarts
-    var-lib-postgresql-data:
+    var-lib-postgresql-18:

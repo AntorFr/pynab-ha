@@ -249,10 +249,34 @@ class NabdMockTestCase(TestCase):
         try:
             self.mock_nabd_loop.run_forever()
         finally:
-            server = server_task.result()
-            server.close()
+            if server_task.done():
+                server = server_task.result()
+            else:
+                server_task.cancel()
+                server = None
+            if server is not None:
+                server.close()
             if self.service_writer:
                 self.service_writer.close()
+            pending_tasks = [
+                task
+                for task in asyncio.all_tasks(self.mock_nabd_loop)
+                if not task.done()
+            ]
+            for task in pending_tasks:
+                task.cancel()
+            if pending_tasks:
+                try:
+                    self.mock_nabd_loop.run_until_complete(
+                        asyncio.wait_for(
+                            asyncio.gather(
+                                *pending_tasks, return_exceptions=True
+                            ),
+                            timeout=1,
+                        )
+                    )
+                except asyncio.TimeoutError:
+                    pass
             self.mock_nabd_loop.close()
 
     def setUp(self):

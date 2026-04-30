@@ -1,5 +1,6 @@
 import datetime
 import json
+import types
 import unittest
 
 import pytest
@@ -70,6 +71,11 @@ class TestNabAirqualityd(unittest.TestCase):
         service = NabAirqualityd()
         writer = MockWriter()
         service.writer = writer
+
+        async def fetch_info_data(self, config_t):
+            return {"visual_airquality": "always", "data": 2}
+
+        service.fetch_info_data = types.MethodType(fetch_info_data, service)
         packet = {
             "type": "asr_event",
             "nlu": {"intent": "nabairqualityd/forecast"},
