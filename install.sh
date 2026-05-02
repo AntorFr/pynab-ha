@@ -13,6 +13,10 @@ ci_chroot=0
 # test : user wants to run tests (good idea, makes sure sounds and leds are functional)
 test=0
 
+# Assist Satellite dependencies and daemon activation are optional because wake
+# word engines are heavier than the core Pynab runtime.
+install_assist=0
+
 # upgrade : this script is invoked from upgrade.sh, typically from the button in the web interface.
 upgrade=0
 
@@ -244,6 +248,10 @@ fi
 # Start with wheel which is required to compile some of the other requirements
 venv/bin/pip install --no-cache-dir wheel
 venv/bin/pip install --no-cache-dir -r requirements.txt
+if [ "${PYNAB_INSTALL_ASSIST:-0}" = "1" ]; then
+  install_assist=1
+  venv/bin/pip install --no-cache-dir -r requirements-assist.txt
+fi
 
 if [ "${PYNAB_INSTALL_LEGACY_ASR:-0}" = "1" ]; then
   echo "Legacy Snips/Kaldi ASR is not compatible with the modern Python ${py_ver} runtime."
@@ -347,6 +355,10 @@ if [ $upgrade -eq 1 ]; then
 fi
 for service_file in nabd/nabd.socket */*.service ; do
   name=`basename ${service_file}`
+  if [ "${name}" = "nabassistd.service" -a $install_assist -eq 0 ]; then
+    echo "Skipping ${name}; set PYNAB_INSTALL_ASSIST=1 to install Assist Satellite runtime"
+    continue
+  fi
   sudo sed -e "s|/opt/pynab|${root_dir}|g" -e "s|/home/pi/pynab|${root_dir}|g" < ${service_file} > /tmp/${name}
   sudo mv /tmp/${name} /lib/systemd/system/${name}
   sudo chown root /lib/systemd/system/${name}
@@ -430,6 +442,9 @@ else
     # start services
     for service_file in */*.service ; do
       name=`basename ${service_file}`
+      if [ "${name}" = "nabassistd.service" -a $install_assist -eq 0 ]; then
+        continue
+      fi
       if [ "${name}" != "nabd.service" -a "${name}" != "nabweb.service" ]; then
         sudo systemctl start ${name}
       fi
@@ -442,4 +457,10 @@ else
       sudo systemctl start nabweb.service
     fi
   fi
+fi
+
+if [ $install_assist -eq 1 ]; then
+  echo "Assist Satellite runtime installed."
+  echo "Configure it from the web interface, then run:"
+  echo "  ${root_dir}/venv/bin/python ${root_dir}/manage.py assist_diagnostics"
 fi

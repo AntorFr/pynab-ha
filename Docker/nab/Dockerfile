@@ -42,9 +42,15 @@ RUN python3 -m venv ${VIRTUAL_ENV}
 ENV PATH=${VIRTUAL_ENV}/bin:${PATH}
 
 COPY requirements.txt /tmp/requirements.txt
+COPY requirements-assist.txt /tmp/requirements-assist.txt
 
 RUN ${VIRTUAL_ENV}/bin/pip install wheel
 RUN ${VIRTUAL_ENV}/bin/pip install -r /tmp/requirements.txt
+
+ARG INSTALL_ASSIST=0
+RUN if [ "${INSTALL_ASSIST}" = "1" ]; then \
+        ${VIRTUAL_ENV}/bin/pip install -r /tmp/requirements-assist.txt; \
+    fi
 
 ENV NABD_HOST=pynab
 ENV NABD_PORT_NUMBER=10543

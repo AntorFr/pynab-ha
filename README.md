@@ -76,6 +76,19 @@ Ce script fait le reste, notamment l'installation et le démarrage des services 
 bash install.sh
 ```
 
+Pour installer aussi le runtime Home Assistant Assist Satellite, avec les
+dépendances wake word optionnelles et le service `nabassistd` :
+
+```sh
+PYNAB_INSTALL_ASSIST=1 bash install.sh
+```
+
+Après configuration dans l'interface web, le diagnostic peut être lancé en SSH :
+
+```sh
+venv/bin/python manage.py assist_diagnostics
+```
+
 ou, pour les cartes de la Maker Faire 2018 :
 
 ```sh
@@ -108,6 +121,7 @@ Voir le [protocole nabd](PROTOCOL.md)
 - `nabmastodond` : démon pour le service mastodon
 - `nabweatherd` : démon pour le service météo
 - `nabiftttd` : démon pour le service IFTTT
+- `nabassistd` : démon Home Assistant Assist Satellite
 - `nabweb` : interface web pour la configuration
 
 ## Contribution

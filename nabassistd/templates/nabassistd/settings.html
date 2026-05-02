@@ -1,0 +1,153 @@
+{% load i18n l10n %}
+<div class="card" id="assist-settings">
+  <form action="/nabassistd/settings">
+    {% csrf_token %}
+    <div class="card-header">
+      <h5 class="card-title">{% trans "Assist Satellite" %}</h5>
+    </div>
+    <div class="card-body">
+      <p>{% trans "Configure Home Assistant Assist wake-word detection and Wyoming connection for this rabbit." %}</p>
+
+      <div class="form-group row">
+        <label for="assistEnabled" class="col-6 col-form-label">{% trans "Enabled" %}</label>
+        <div class="col-6">
+          <input id="assistEnabled" name="enabled" type="checkbox" {% if config.enabled %}checked{% endif %}/>
+        </div>
+      </div>
+
+      <div class="form-group row">
+        <label for="assistName" class="col-6 col-form-label">{% trans "Satellite name" %}</label>
+        <div class="col-6">
+          <input id="assistName" name="satellite_name" type="text" class="form-control" value="{{ config.satellite_name }}"/>
+        </div>
+      </div>
+
+      <div class="form-group row">
+        <label for="assistHost" class="col-6 col-form-label">{% trans "Wyoming host" %}</label>
+        <div class="col-6">
+          <input id="assistHost" name="wyoming_host" type="text" class="form-control" value="{{ config.wyoming_host }}"/>
+        </div>
+      </div>
+
+      <div class="form-group row">
+        <label for="assistPort" class="col-6 col-form-label">{% trans "Wyoming port" %}</label>
+        <div class="col-6">
+          <input id="assistPort" name="wyoming_port" type="number" min="1" max="65535" class="form-control" value="{{ config.wyoming_port }}"/>
+        </div>
+      </div>
+
+      <div class="form-group row">
+        <label for="assistWakeEngine" class="col-6 col-form-label">{% trans "Wake-word engine" %}</label>
+        <div class="col-6">
+          <select name="wake_word_engine" id="assistWakeEngine">
+            {% for value, label in wake_word_engines %}
+            <option value="{{ value }}" {% if config.wake_word_engine == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group row">
+        <label for="assistWakeModel" class="col-6 col-form-label">{% trans "Wake-word model" %}</label>
+        <div class="col-6">
+          <input id="assistWakeModel" name="wake_word_model" type="text" class="form-control" value="{{ config.wake_word_model }}"/>
+        </div>
+      </div>
+
+      <div class="form-group row">
+        <label for="assistSensitivity" class="col-6 col-form-label">{% trans "Sensitivity" %}</label>
+        <div class="col-6">
+          <input id="assistSensitivity" name="wake_word_sensitivity" type="number" min="0" max="1" step="0.05" class="form-control" value="{{ config.wake_word_sensitivity|unlocalize }}"/>
+        </div>
+      </div>
+
+      <div class="form-group row">
+        <label for="assistPreRoll" class="col-6 col-form-label">{% trans "Pre-roll seconds" %}</label>
+        <div class="col-6">
+          <input id="assistPreRoll" name="pre_roll_seconds" type="number" min="0.1" max="5" step="0.1" class="form-control" value="{{ config.pre_roll_seconds|unlocalize }}"/>
+        </div>
+      </div>
+
+      <div class="form-group row">
+        <label for="assistFallback" class="col-6 col-form-label">{% trans "Fallback to Home Assistant wake word" %}</label>
+        <div class="col-6">
+          <input id="assistFallback" name="fallback_to_remote" type="checkbox" {% if config.fallback_to_remote %}checked{% endif %}/>
+        </div>
+      </div>
+
+      <div class="assist-diagnostics-results d-none"></div>
+    </div>
+    <div class="card-footer">
+      <div class="row mb-2">
+        <div class="col-12">
+          <button type="button" class="btn btn-outline-primary ml-2 float-right diagnostics-button">{% trans "Test" %}</button>
+          <button type="submit" class="btn btn-primary disabled ml-2 float-right save-button">{% trans "Save" %}</button>
+          <button type="reset" class="btn btn-outline-primary disabled ml-2 float-right reset-button">{% trans "Reset" %}</button>
+        </div>
+      </div>
+    </div>
+  </form>
+  <script type="text/javascript">
+  $(function() {
+    var form = $('#assist-settings form');
+    var saveBtn = form.find('button.save-button');
+    var resetBtn = form.find('button.reset-button');
+    var diagnosticsBtn = form.find('button.diagnostics-button');
+    var diagnosticsResults = form.find('.assist-diagnostics-results');
+    var url = form.attr('action');
+    var diagnosticsUrl = "/nabassistd/diagnostics";
+    form.find('input, select').on('change keyup', function() {
+      saveBtn.removeClass('disabled');
+      resetBtn.removeClass('disabled');
+      diagnosticsResults.addClass('d-none').empty();
+    });
+    form.on('submit', function() {
+      var formdata = form.serialize();
+      $.ajax({
+        url: url,
+        method: "POST",
+        data: formdata,
+        success: function (data) {
+          $("#assist-settings").replaceWith(data);
+        },
+        error: function () {
+          $.bootstrapGrowl("{% trans "Unknown server error" %}", {type: 'danger', allow_dismiss: true});
+        }
+      });
+      return false;
+    });
+    resetBtn.on("click", function() {
+      $.get(url, function(data) {
+        $("#assist-settings").replaceWith(data);
+      });
+    });
+    diagnosticsBtn.on("click", function() {
+      diagnosticsBtn.addClass('disabled');
+      $.ajax({
+        url: diagnosticsUrl,
+        method: "POST",
+        data: form.serialize(),
+        success: function (data) {
+          diagnosticsResults.empty().removeClass('d-none');
+          $.each(data.results, function(index, result) {
+            var alertClass = result.ok ? 'alert-success' : 'alert-danger';
+            var status = result.ok ? 'OK' : 'FAIL';
+            diagnosticsResults.append(
+              $('<div/>')
+                .addClass('alert ' + alertClass)
+                .attr('role', 'alert')
+                .text(status + ' ' + result.name + ': ' + result.message)
+            );
+          });
+        },
+        error: function () {
+          $.bootstrapGrowl("{% trans "Unknown server error" %}", {type: 'danger', allow_dismiss: true});
+        },
+        complete: function () {
+          diagnosticsBtn.removeClass('disabled');
+        }
+      });
+    });
+  });
+  </script>
+</div>

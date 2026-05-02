@@ -1,0 +1,11 @@
+# Optional Assist Satellite dependencies.
+#
+# Keep these separate from requirements.txt until nabassistd is proven on the
+# target Raspberry Pi hardware.
+
+wyoming==1.8.0
+pymicro-wakeword==2.2.1
+
+# Optional heavier wake-word engine for Pi 3/4/5-class hardware.
+# Install manually on hardware that can support it:
+# openwakeword==0.6.0
