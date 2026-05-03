@@ -49,7 +49,7 @@ sudo apt-get upgrade
 
 Les 'kernel headers' sont nécessaires pour la compilation des pilotes:
 ```sh
-sudo apt-get install gcc make raspberrypi-kernel-headers
+sudo apt-get install gcc make linux-headers-rpi-v8
 ```
 
 ### 2. Installer PostgreSQL et les paquets requis

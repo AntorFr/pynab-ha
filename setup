@@ -185,7 +185,7 @@ echo "Installing required packages."
 sudo apt-get update -y
 sudo apt-get dist-upgrade -y
 sudo apt-get install --no-install-recommends -y postgresql libpq-dev git python3 python3-venv python3-dev gettext nginx openssl libssl-dev libffi-dev libmpg123-dev libasound2-dev libgfortran5 libopenblas-dev liblapack-dev zram-tools
-sudo apt-get install --no-install-recommends -y gcc make raspberrypi-kernel-headers
+sudo apt-get install --no-install-recommends -y gcc make linux-headers-rpi-v8
 
 build_and_install_driver() {
     for dir in /lib/modules/*/build

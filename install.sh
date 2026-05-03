@@ -43,11 +43,12 @@ elif [ "${1:-}" == "--upgrade" ]; then
   fi
 fi
 
-model=$(grep "^Model" /proc/cpuinfo ; true)
-if [[ ! "$model" == *"Raspberry Pi Zero"* ]]; then
-  # not a Pi Zero or Zero 2
-  echo "Installation only planned on Raspberry Pi Zero, will cowardly exit"
-  exit 1
+if [ -z "${ci_chroot:-}" ] && [ -z "${test:-}" ]; then
+  model=$(grep "^Model" /proc/cpuinfo ; true)
+  if [[ ! "$model" == *"Raspberry Pi Zero"* ]]; then
+    echo "Installation only planned on Raspberry Pi Zero, will cowardly exit"
+    exit 1
+  fi
 fi
 
 if [ $USER == "root" ]; then
