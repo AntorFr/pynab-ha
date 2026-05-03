@@ -55,7 +55,7 @@ sudo apt-get install gcc make raspberrypi-kernel-headers
 ### 2. Installer PostgreSQL et les paquets requis
 
 ```sh
-sudo apt-get install postgresql libpq-dev git python3 python3-venv python3-dev gettext nginx openssl libssl-dev libffi-dev libmpg123-dev libasound2-dev libatlas-base-dev libgfortran5 libopenblas-dev liblapack-dev zram-tools
+sudo apt-get install postgresql libpq-dev git python3 python3-venv python3-dev gettext nginx openssl libssl-dev libffi-dev libmpg123-dev libasound2-dev libgfortran5 libopenblas-dev liblapack-dev zram-tools
 ```
 Sur DietPi les paquets suivants sont aussi nécessaires:
 ```sh

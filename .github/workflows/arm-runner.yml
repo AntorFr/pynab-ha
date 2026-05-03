@@ -38,7 +38,7 @@ jobs:
             sudo sh -c "[ ! -f /etc/sudoers.d/010_pi-nopasswd ] && usermod -aG sudo pi && echo 'pi ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/010_pi-nopasswd || true"
             sudo chown -hR pi:pi /opt/pynab
             sudo apt-get update -y --allow-releaseinfo-change
-            sudo apt-get install --no-install-recommends -y postgresql libpq-dev git python3 python3-venv python3-dev gettext nginx openssl libssl-dev libffi-dev libmpg123-dev libasound2-dev libatlas-base-dev libgfortran5 libopenblas-dev liblapack-dev zram-tools
+            sudo apt-get install --no-install-recommends -y postgresql libpq-dev git python3 python3-venv python3-dev gettext nginx openssl libssl-dev libffi-dev libmpg123-dev libasound2-dev libgfortran5 libopenblas-dev liblapack-dev zram-tools
             sudo mkdir -p /run/systemd/timesync/ && sudo touch /run/systemd/timesync/synchronized
             sudo apt-get install --no-install-recommends -y alsa-utils xz-utils avahi-daemon
             sudo -u pi PYNAB_INSTALL_ASSIST=1 /bin/bash /opt/pynab/install.sh ci-chroot-test
