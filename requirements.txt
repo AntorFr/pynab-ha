@@ -1,8 +1,4 @@
 # Modern core runtime and developer dependencies.
-#
-# Legacy local ASR/NLU dependencies are intentionally kept out of this file.
-# They are pinned in requirements-asr-legacy.txt because the old Snips/Kaldi
-# stack depends on Python-version-specific native wheels.
 
 # Runtime
 Django==5.2.13

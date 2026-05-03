@@ -254,12 +254,6 @@ if [ "${PYNAB_INSTALL_ASSIST:-0}" = "1" ]; then
   venv/bin/pip install --no-cache-dir -r requirements-assist.txt
 fi
 
-if [ "${PYNAB_INSTALL_LEGACY_ASR:-0}" = "1" ]; then
-  echo "Legacy Snips/Kaldi ASR is not compatible with the modern Python ${py_ver} runtime."
-  echo "It has been split into requirements-asr-legacy.txt for reference until the Assist Satellite backend replaces it."
-  exit 1
-fi
-
 trust=`sudo grep local /etc/postgresql/*/main/pg_hba.conf | grep -cE '^local +all +all +trust' || echo -n ''`
 if [ $trust -ne 1 ]; then
   echo "Configuring PostgreSQL for trusted access"
