@@ -195,7 +195,7 @@ sudo apt-get install --no-install-recommends -y gcc make linux-headers-rpi-v8 de
 # but we only install one set of headers. Pi Zero 2 W uses v8.
 build_and_install_driver() {
     local module_name="${1:?module name required}"
-    local overlay_name="${2:?overlay name required}"
+    local overlay_name="${2-}"
     local built_at_least_once=0
     for dir in /lib/modules/*/build
     do
