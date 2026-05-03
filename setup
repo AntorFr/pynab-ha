@@ -219,6 +219,14 @@ sudo chown ${owner}:${group} ${inst_dir}/cr14
 sudo -u ${owner} git clone --depth 1 -b ${driver_branch} https://github.com/pguyot/cr14 ${inst_dir}/cr14
 sudo git config --system --add safe.directory ${inst_dir}/cr14
 cd ${inst_dir}/cr14
+# Linux >=5.15 kernel headers ship without scripts/dtc/ sources, so let the
+# top-level Makefile (which already has a system-dtc rule for kernel 6.x)
+# build the overlay instead of Kbuild.
+sudo -u ${owner} sed -i \
+    -e '/^dtbo-y[[:space:]]*+=/d' \
+    -e '/^targets[[:space:]]*+=[[:space:]]*\$(dtbo-y)/d' \
+    -e '/^ifeq.*KERNELRELEASE.*),4)/,/^endif/d' \
+    Makefile
 build_and_install_driver
 
 echo "Installing RFID reader driver for 2022 NFC card."
@@ -227,6 +235,25 @@ sudo chown ${owner}:${group} ${inst_dir}/st25r391x
 sudo -u ${owner} git clone --depth 1 -b ${st25_branch} https://github.com/pguyot/st25r391x ${inst_dir}/st25r391x
 sudo git config --system --add safe.directory ${inst_dir}/st25r391x
 cd ${inst_dir}/st25r391x
+# Fix unfixed upstream bug: <stdarg.h> was removed from the kernel include
+# path in Linux 5.15 (see pguyot/st25r391x#8).
+sudo -u ${owner} sed -i \
+    -e 's|^#include <stdarg.h>|#include <linux/stdarg.h>|' \
+    st25r391x_main.c
+# Same dtbo workaround as cr14, plus an explicit dtc rule (which st25r391x
+# does not ship upstream).
+sudo -u ${owner} sed -i \
+    -e '/^dtbo-y[[:space:]]*+=/d' \
+    -e '/^targets[[:space:]]*+=[[:space:]]*\$(dtbo-y)/d' \
+    -e '/^ifeq.*KERNELRELEASE.*),4)/,/^endif/d' \
+    Makefile
+sudo -u ${owner} tee -a Makefile > /dev/null <<'MAKEFILE_PATCH'
+
+all: st25r391x.dtbo
+
+st25r391x.dtbo: st25r391x-overlay.dts
+	dtc -I dts -O dtb -o $@ $<
+MAKEFILE_PATCH
 build_and_install_driver
 
 echo "Disabling 2022 NFC card driver and making sure i2c-dev is enabled"
