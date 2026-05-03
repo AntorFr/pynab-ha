@@ -144,6 +144,10 @@ EOF
     then
         echo "Enabling SSH for headless first boot."
         sudo systemctl enable ssh
+        # Without a regulatory domain, RaspiOS Bookworm+ keeps wlan0 rfkill'd
+        # so comitup cannot bring up its setup AP.
+        echo "Setting Wi-Fi regulatory domain to FR."
+        sudo raspi-config nonint do_wifi_country FR
     elif [ "${distro}" == "dietpi" ]
     then
         echo "Setting DietPi 'first boot' parameters."
