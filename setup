@@ -194,6 +194,9 @@ sudo apt-get install --no-install-recommends -y gcc make linux-headers-rpi-v8 de
 # ships modules for both rpt-rpi-v8 (Pi Zero 2 / 3 / 4) and rpt-rpi-2712 (Pi 5),
 # but we only install one set of headers. Pi Zero 2 W uses v8.
 build_and_install_driver() {
+    local module_name="${1:?module name required}"
+    local overlay_name="${2:?overlay name required}"
+    local built_at_least_once=0
     for dir in /lib/modules/*/build
     do
         kernel=$(basename $(dirname ${dir}))
@@ -201,10 +204,33 @@ build_and_install_driver() {
             echo "Skipping kernel ${kernel}: no matching headers installed"
             continue
         fi
+        echo "Building ${module_name} for kernel ${kernel}."
         make KERNELRELEASE=${kernel}
         sudo make install KERNELRELEASE=${kernel}
         make clean KERNELRELEASE=${kernel}
+        # Fail loudly if the module didn't actually land where it should.
+        if ! find "/lib/modules/${kernel}/" -name "${module_name}.ko*" | grep -q .; then
+            echo "FATAL: ${module_name}.ko was not installed for kernel ${kernel}" >&2
+            exit 1
+        fi
+        built_at_least_once=1
     done
+    if [ "${built_at_least_once}" -eq 0 ]; then
+        echo "FATAL: no kernel headers available to build ${module_name}" >&2
+        exit 1
+    fi
+    if [ -n "${overlay_name}" ]; then
+        if [ ! -e "/boot/firmware/overlays/${overlay_name}.dtbo" ] && \
+           [ ! -e "/boot/overlays/${overlay_name}.dtbo" ]; then
+            echo "FATAL: ${overlay_name}.dtbo was not installed" >&2
+            exit 1
+        fi
+        if ! grep -qE "^dtoverlay=${overlay_name}([,$])" /boot/firmware/config.txt 2>/dev/null && \
+           ! grep -qE "^dtoverlay=${overlay_name}([,$])" /boot/config.txt 2>/dev/null; then
+            echo "FATAL: dtoverlay=${overlay_name} not present in config.txt" >&2
+            exit 1
+        fi
+    fi
 }
 
 # Strips dtbo-y/always-y/targets += $(dtbo-y) from a Kbuild Makefile so Kbuild
@@ -226,16 +252,17 @@ sudo -u ${owner} git clone --depth 1 -b tagtagtag-sound https://github.com/pguyo
 sudo git config --system --add safe.directory ${inst_dir}/wm8960
 cd ${inst_dir}/wm8960
 strip_kbuild_dtbo
-build_and_install_driver
+build_and_install_driver snd-soc-wm8960 tagtagtag-sound
 
 echo "Installing ears driver."
 sudo mkdir -p ${inst_dir}/tagtagtag-ears
 sudo chown ${owner}:${group} ${inst_dir}/tagtagtag-ears
-# AntorFr fork: kernel 6.4/6.11 API compatibility patches (pending upstream PR).
+# AntorFr fork: kernel 6.4/6.11 API compatibility patches + system-dtc rule
+# (pending upstream PR).
 sudo -u ${owner} git clone --depth 1 -b ${driver_branch} https://github.com/AntorFr/tagtagtag-ears ${inst_dir}/tagtagtag-ears
 sudo git config --system --add safe.directory ${inst_dir}/tagtagtag-ears
 cd ${inst_dir}/tagtagtag-ears
-build_and_install_driver
+build_and_install_driver tagtagtag-ears tagtagtag-ears
 
 echo "Installing RFID reader driver for TAGTAG."
 sudo mkdir -p ${inst_dir}/cr14
@@ -244,7 +271,7 @@ sudo -u ${owner} git clone --depth 1 -b ${driver_branch} https://github.com/pguy
 sudo git config --system --add safe.directory ${inst_dir}/cr14
 cd ${inst_dir}/cr14
 strip_kbuild_dtbo
-build_and_install_driver
+build_and_install_driver cr14 cr14
 
 echo "Installing RFID reader driver for 2022 NFC card."
 sudo mkdir -p ${inst_dir}/st25r391x
@@ -266,7 +293,9 @@ all: st25r391x.dtbo
 st25r391x.dtbo: st25r391x-overlay.dts
 	dtc -I dts -O dtb -o $@ $<
 MAKEFILE_PATCH
-build_and_install_driver
+# st25r391x conflicts with cr14 and is later disabled below; pass empty
+# overlay name to skip the dtoverlay= check (the install: rule comments it).
+build_and_install_driver st25r391x ""
 
 echo "Disabling 2022 NFC card driver and making sure i2c-dev is enabled"
 # Disable this driver as it conflicts with cr14 (nabboot will do the switch)
