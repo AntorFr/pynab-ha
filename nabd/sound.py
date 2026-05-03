@@ -73,3 +73,27 @@ class Sound(object, metaclass=abc.ABCMeta):
         Invokes stream_cb with finalize set to true.
         """
         raise NotImplementedError("Should have implemented")
+
+    def get_volume(self):
+        """
+        Return output volume in percent, or None if unavailable.
+        """
+        return None
+
+    def set_volume(self, volume):
+        """
+        Set output volume in percent.
+        """
+        raise NotImplementedError("Volume control is unavailable")
+
+    def get_muted(self):
+        """
+        Return output mute state, or None if unavailable.
+        """
+        return None
+
+    def set_muted(self, muted):
+        """
+        Set output mute state.
+        """
+        raise NotImplementedError("Mute control is unavailable")

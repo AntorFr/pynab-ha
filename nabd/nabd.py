@@ -622,6 +622,60 @@ class Nabd:
                 self.idle_queue.append((packet, writer))
                 self.idle_cv.notify()
 
+    async def process_volume_packet(
+        self, packet: AnyPacket, writer: asyncio.StreamWriter
+    ):
+        if "level" in packet:
+            level = packet["level"]
+            if not isinstance(level, int) or level < 0 or level > 100:
+                self.write_response_packet(
+                    packet,
+                    status_error_malformed_packet(
+                        "Invalid level slot, expected an int between 0 and 100"
+                    ),
+                    writer,
+                )
+                return
+            try:
+                self.nabio.sound.set_volume(level)
+            except Exception as exc:
+                self.write_response_packet(
+                    packet,
+                    status_error("VolumeUnavailable", str(exc)),
+                    writer,
+                )
+                return
+        volume = self.nabio.sound.get_volume()
+        response = cast(ResponsePacketProto, {"status": "ok", "volume": volume})
+        self.write_response_packet(packet, response, writer)
+
+    async def process_mute_packet(
+        self, packet: AnyPacket, writer: asyncio.StreamWriter
+    ):
+        if "muted" in packet:
+            muted = packet["muted"]
+            if not isinstance(muted, bool):
+                self.write_response_packet(
+                    packet,
+                    status_error_malformed_packet(
+                        "Invalid muted slot, expected a bool"
+                    ),
+                    writer,
+                )
+                return
+            try:
+                self.nabio.sound.set_muted(muted)
+            except Exception as exc:
+                self.write_response_packet(
+                    packet,
+                    status_error("MuteUnavailable", str(exc)),
+                    writer,
+                )
+                return
+        muted = self.nabio.sound.get_muted()
+        response = cast(ResponsePacketProto, {"status": "ok", "muted": muted})
+        self.write_response_packet(packet, response, writer)
+
     async def process_mode_packet(
         self, any_packet: AnyPacket, writer: asyncio.StreamWriter
     ):
@@ -888,6 +942,8 @@ class Nabd:
             "cancel": self.process_cancel_packet,
             "wakeup": self.process_wakeup_packet,
             "sleep": self.process_sleep_packet,
+            "volume": self.process_volume_packet,
+            "mute": self.process_mute_packet,
             "mode": self.process_mode_packet,
             "gestalt": self.process_gestalt_packet,
             "config-update": self.process_config_update_packet,

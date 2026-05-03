@@ -7,47 +7,32 @@ on:
       - '*'
   pull_request:
   workflow_dispatch:
+
+env:
+  TARGET: zero2_64_raspios
+  CPU: cortex-a53
+  CPU_INFO: cpuinfo/raspberrypi_zero2_w_arm64
+  BASE_IMAGE: raspios_lite_arm64:latest
+  PYNAB_INSTALL_ASSIST: "1"
+
 jobs:
   test_suite:
-    name: Run test suite
+    name: Run test suite (Pi Zero 2 W, arm64)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [zero_raspbian, zero_raspios, zero_dietpi, zero2_64_raspios]
-        include:
-        - target: zero_raspbian
-          cpu: arm1176
-          cpu_info: cpuinfo/raspberrypi_zero_w
-          base_image: raspbian_lite:latest
-        - target: zero_raspios
-          cpu: arm1176
-          cpu_info: cpuinfo/raspberrypi_zero_w
-          base_image: raspios_lite:2023-05-03
-        - target: zero_dietpi
-          cpu: arm1176
-          cpu_info: cpuinfo/raspberrypi_zero_w
-          base_image: dietpi:rpi_armv6_bullseye
-        - target: zero2_64_raspios
-          cpu: cortex-a53
-          cpu_info: cpuinfo/raspberrypi_zero2_w_arm64
-          base_image: raspios_lite_arm64:2023-05-03
     steps:
       - name: Checkout pynab
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Run test suite in chroot environment
         uses: pguyot/arm-runner-action@v2
-        id: arm_runner_tests
         with:
           image_additional_mb: 4096
-          base_image: ${{ matrix.base_image }}
-          cpu: ${{ matrix.cpu }}
-          cpu_info: ${{ matrix.cpu_info }}
+          base_image: ${{ env.BASE_IMAGE }}
+          cpu: ${{ env.CPU }}
+          cpu_info: ${{ env.CPU_INFO }}
           copy_repository_path: /opt/pynab
           optimize_image: no
           commands: |
-            # Disable IPv6 in case it is configured but does not work
             ping6 -c 1 www.ietf.org || sudo sysctl -w net.ipv6.conf.eth0.disable_ipv6=1
             sudo useradd pi || true
             sudo sh -c "[ ! -f /etc/sudoers.d/010_pi-nopasswd ] && usermod -aG sudo pi && echo 'pi ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/010_pi-nopasswd || true"
@@ -56,39 +41,14 @@ jobs:
             sudo apt-get install --no-install-recommends -y postgresql libpq-dev git python3 python3-venv python3-dev gettext nginx openssl libssl-dev libffi-dev libmpg123-dev libasound2-dev libatlas-base-dev libgfortran5 libopenblas-dev liblapack-dev zram-tools
             sudo mkdir -p /run/systemd/timesync/ && sudo touch /run/systemd/timesync/synchronized
             sudo apt-get install --no-install-recommends -y alsa-utils xz-utils avahi-daemon
-            # Tests only run on a single CPU, postgresql aborts otherwise.
-            # It might be because armv6l binaries are not thread safe, but
-            # Pi Zero 2 do execute 32 bits code concurrently.
-            # And it also fails with aarch64 binaries of postgresql.
-            sudo -u pi taskset -c 0 /bin/bash /opt/pynab/install.sh ci-chroot-test
+            sudo -u pi PYNAB_INSTALL_ASSIST=1 /bin/bash /opt/pynab/install.sh ci-chroot-test
 
   create_image:
-    name: Build image
+    name: Build image (Pi Zero 2 W, arm64, Assist enabled)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [zero_raspbian, zero_raspios, zero_dietpi, zero2_64_raspios]
-        include:
-        - target: zero_raspbian
-          cpu: arm1176
-          cpu_info: cpuinfo/raspberrypi_zero_w
-          base_image: raspbian_lite:latest
-        - target: zero_raspios
-          cpu: arm1176
-          cpu_info: cpuinfo/raspberrypi_zero_w
-          base_image: raspios_lite:2023-05-03
-        - target: zero_dietpi
-          cpu: arm1176
-          cpu_info: cpuinfo/raspberrypi_zero_w
-          base_image: dietpi:rpi_armv6_bullseye
-        - target: zero2_64_raspios
-          cpu: cortex-a53
-          cpu_info: cpuinfo/raspberrypi_zero2_w_arm64
-          base_image: raspios_lite_arm64:2023-05-03
     steps:
       - name: Checkout pynab
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Define the image name
         id: image_and_branch_name
@@ -96,21 +56,21 @@ jobs:
           if [ ${GITHUB_REF/refs\/tags\//} != ${GITHUB_REF} ]; then
             echo "LOCAL_BRANCH=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
             echo "RELEASE_NAME=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
-            echo "IMAGE_NAME_SUFFIX=${GITHUB_REF/refs\/tags\//}-${{ matrix.target }}" >> $GITHUB_OUTPUT
+            echo "IMAGE_NAME_SUFFIX=${GITHUB_REF/refs\/tags\//}-${TARGET}" >> $GITHUB_OUTPUT
             echo "CLONE_RELEASE=yes" >> $GITHUB_OUTPUT
           elif [ ${GITHUB_REF/refs\/heads\//} = "releng" ]; then
             echo "LOCAL_BRANCH=releng" >> $GITHUB_OUTPUT
             echo "RELEASE_NAME=releng" >> $GITHUB_OUTPUT
-            echo "IMAGE_NAME_SUFFIX=releng-${{ matrix.target }}" >> $GITHUB_OUTPUT
+            echo "IMAGE_NAME_SUFFIX=releng-${TARGET}" >> $GITHUB_OUTPUT
             echo "CLONE_RELEASE=yes" >> $GITHUB_OUTPUT
           elif [ ${GITHUB_REF/refs\/heads\//} != "${GITHUB_REF}" ]; then
             echo "LOCAL_BRANCH=${GITHUB_REF/refs\/heads\//}" >> $GITHUB_OUTPUT
             echo "RELEASE_NAME=${GITHUB_REF/refs\/heads\//}" >> $GITHUB_OUTPUT
-            echo "IMAGE_NAME_SUFFIX=${GITHUB_REF/refs\/heads\//}-${{ matrix.target }}" >> $GITHUB_OUTPUT
+            echo "IMAGE_NAME_SUFFIX=${GITHUB_REF/refs\/heads\//}-${TARGET}" >> $GITHUB_OUTPUT
             echo "CLONE_RELEASE=yes" >> $GITHUB_OUTPUT
           else
             echo "LOCAL_BRANCH=${GITHUB_REF}" >> $GITHUB_OUTPUT
-            echo "IMAGE_NAME_SUFFIX=${GITHUB_REF//\//-}-${{ matrix.target }}" >> $GITHUB_OUTPUT
+            echo "IMAGE_NAME_SUFFIX=${GITHUB_REF//\//-}-${TARGET}" >> $GITHUB_OUTPUT
             echo "CLONE_RELEASE=no" >> $GITHUB_OUTPUT
           fi
 
@@ -119,13 +79,12 @@ jobs:
         id: arm_runner_install
         with:
           image_additional_mb: 4096
-          base_image: ${{ matrix.base_image }}
-          cpu: ${{ matrix.cpu }}
-          cpu_info: ${{ matrix.cpu_info }}
+          base_image: ${{ env.BASE_IMAGE }}
+          cpu: ${{ env.CPU }}
+          cpu_info: ${{ env.CPU_INFO }}
           optimize_image: yes
           copy_repository_path: /opt/pynab
           commands: |
-            # Disable IPv6 in case it is configured but does not work
             ping6 -c 1 www.ietf.org || sudo sysctl -w net.ipv6.conf.eth0.disable_ipv6=1
             sudo apt-get update -y --allow-releaseinfo-change
             echo GITHUB_BRANCH=${{ steps.image_and_branch_name.outputs.LOCAL_BRANCH }}
@@ -138,11 +97,7 @@ jobs:
                 sudo useradd tagtagtag -u 1000 -g 1000 -m || true
                 sudo chown -hR 1000:1000 /opt/pynab
             fi
-            if [ `uname -m` = 'armv6l' -o `uname -m` = 'armv7l' ]; then
-                sudo GITHUB_BRANCH=${{ steps.image_and_branch_name.outputs.LOCAL_BRANCH }} GITHUB_REPOSITORY=${{ github.repository }} taskset -c 0 /bin/bash /tmp/setup ci-chroot
-            else
-                sudo GITHUB_BRANCH=${{ steps.image_and_branch_name.outputs.LOCAL_BRANCH }} GITHUB_REPOSITORY=${{ github.repository }} /bin/bash /tmp/setup ci-chroot
-            fi
+            sudo GITHUB_BRANCH=${{ steps.image_and_branch_name.outputs.LOCAL_BRANCH }} GITHUB_REPOSITORY=${{ github.repository }} PYNAB_INSTALL_ASSIST=1 /bin/bash /tmp/setup ci-chroot
             sudo rm /tmp/setup
             sudo apt-get autoremove --purge -y
             sudo apt-get clean
@@ -153,12 +108,12 @@ jobs:
           sudo xz -T 0 -v pynab-${{ steps.image_and_branch_name.outputs.IMAGE_NAME_SUFFIX }}.img
 
       - name: Upload the image artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pynab-${{ steps.image_and_branch_name.outputs.IMAGE_NAME_SUFFIX }}.img.xz
           path: pynab-${{ steps.image_and_branch_name.outputs.IMAGE_NAME_SUFFIX }}.img.xz
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
 
   create_release:
     name: Release
@@ -180,7 +135,7 @@ jobs:
           fi
 
       - name: Download the image artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Create release with releng image
         if: github.ref == 'refs/heads/releng'

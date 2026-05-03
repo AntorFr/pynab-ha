@@ -1,0 +1,17 @@
+[Unit]
+Description=Nabaztag Home Assistant MQTT daemon
+After=nabd.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+WorkingDirectory=/opt/pynab
+EnvironmentFile=/opt/pynab/nabhomeassistantd/nabhomeassistantd.conf
+ExecStart=/opt/pynab/venv/bin/python -m nabhomeassistantd.nabhomeassistantd
+PIDFile=/run/nabhomeassistantd.pid
+
+[Install]
+WantedBy=multi-user.target

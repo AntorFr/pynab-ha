@@ -134,6 +134,50 @@ class TestNabd(TestNabdBase):
             s1.close()
             s2.close()
 
+    def test_volume(self):
+        s1 = self.service_socket()
+        try:
+            packet = s1.readline()  # state packet
+            s1.write(b'{"type":"volume","level":42,"request_id":"vol"}\r\n')
+            packet = s1.readline()
+            packet_j = json.loads(packet.decode("utf8"))
+            self.assertEqual(packet_j["type"], "response")
+            self.assertEqual(packet_j["request_id"], "vol")
+            self.assertEqual(packet_j["status"], "ok")
+            self.assertEqual(packet_j["volume"], 42)
+            self.assertEqual(self.nabio.sound.volume, 42)
+
+            s1.write(b'{"type":"volume","level":101}\r\n')
+            packet = s1.readline()
+            packet_j = json.loads(packet.decode("utf8"))
+            self.assertEqual(packet_j["type"], "response")
+            self.assertEqual(packet_j["status"], "error")
+            self.assertEqual(packet_j["class"], "MalformedPacket")
+        finally:
+            s1.close()
+
+    def test_mute(self):
+        s1 = self.service_socket()
+        try:
+            packet = s1.readline()  # state packet
+            s1.write(b'{"type":"mute","muted":true,"request_id":"mute"}\r\n')
+            packet = s1.readline()
+            packet_j = json.loads(packet.decode("utf8"))
+            self.assertEqual(packet_j["type"], "response")
+            self.assertEqual(packet_j["request_id"], "mute")
+            self.assertEqual(packet_j["status"], "ok")
+            self.assertTrue(packet_j["muted"])
+            self.assertTrue(self.nabio.sound.muted)
+
+            s1.write(b'{"type":"mute","muted":"yes"}\r\n')
+            packet = s1.readline()
+            packet_j = json.loads(packet.decode("utf8"))
+            self.assertEqual(packet_j["type"], "response")
+            self.assertEqual(packet_j["status"], "error")
+            self.assertEqual(packet_j["class"], "MalformedPacket")
+        finally:
+            s1.close()
+
     def test_sleep_message_wakeup(self):
         s1 = self.service_socket()
         s2 = self.service_socket()

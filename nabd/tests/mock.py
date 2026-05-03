@@ -164,6 +164,8 @@ class LedsMock(Leds):
 class SoundMock(Sound):
     def __init__(self):
         self.called_list = []
+        self.volume = 50
+        self.muted = False
 
     async def start_playing_preloaded(self, filename):
         self.called_list.append(f"start_playing_preloaded({filename})")
@@ -189,6 +191,20 @@ class SoundMock(Sound):
 
     async def preload(self, res):
         return res
+
+    def get_volume(self):
+        return self.volume
+
+    def set_volume(self, volume):
+        self.volume = volume
+        self.called_list.append(f"set_volume({volume})")
+
+    def get_muted(self):
+        return self.muted
+
+    def set_muted(self, muted):
+        self.muted = muted
+        self.called_list.append(f"set_muted({muted})")
 
 
 class RfidMock(Rfid):

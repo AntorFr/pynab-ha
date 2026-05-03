@@ -11,6 +11,8 @@
 - [Paquets `cancel`](#paquets-cancel)
 - [Paquets `wakeup`](#paquets-wakeup)
 - [Paquets `sleep`](#paquets-sleep)
+- [Paquets `volume`](#paquets-volume)
+- [Paquets `mute`](#paquets-mute)
 - [Paquets `mode`](#paquets-mode)
 - [Paquets `asr_event`](#paquets-asr_event)
 - [Paquets `ears_event`](#paquets-ears_event)
@@ -203,6 +205,40 @@ Endort le lapin. Le lapin s'endort dès que toutes les commandes sont exécutée
 
 Le slot `"request_id"`est optionnel et est retourné dans la réponse.
 
+## Paquets `volume`
+
+Lit ou modifie le volume de sortie du lapin.
+
+Émetteurs: services
+
+- `{"type":"volume","request_id":request_id}`
+- `{"type":"volume","request_id":request_id,"level":level}`
+
+Le slot `"level"` est optionnel. Quand il est présent, c'est un entier entre 0
+et 100. La réponse contient le volume courant:
+
+- `{"type":"response","request_id":request_id,"status":"ok","volume":level}`
+
+Si le matériel ne permet pas le contrôle du volume, la réponse a le statut
+`"error"`.
+
+## Paquets `mute`
+
+Lit ou modifie l'état muet du lapin.
+
+Émetteurs: services
+
+- `{"type":"mute","request_id":request_id}`
+- `{"type":"mute","request_id":request_id,"muted":muted}`
+
+Le slot `"muted"` est optionnel. Quand il est présent, c'est un booléen. La
+réponse contient l'état courant:
+
+- `{"type":"response","request_id":request_id,"status":"ok","muted":muted}`
+
+Si le matériel ne permet pas le contrôle mute, la réponse a le statut
+`"error"`.
+
 ## Paquets `mode`
 
 Émetteurs: services
@@ -313,4 +349,3 @@ Utilisés en interne pour la configuration des tags RFID.
 ## Paquets `gestalt`, `test`, `config-update` et `shutdown`
 
 Utilisés en interne pour la communication entre le site web et nabd.
-

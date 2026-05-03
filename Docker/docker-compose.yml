@@ -29,7 +29,7 @@ services:
         environment:
           # Include nabassistd here and build with
           # PYNAB_DOCKER_INSTALL_ASSIST=1 when testing Assist Satellite.
-          - DAEMONS=${PYNAB_DOCKER_DAEMONS:-nab8balld nabairqualityd nabbookd nabclockd nabmastodond nabsurprised nabtaichid nabweatherd}
+          - DAEMONS=${PYNAB_DOCKER_DAEMONS:-nab8balld nabairqualityd nabbookd nabclockd nabhomeassistantd nabmastodond nabsurprised nabtaichid nabweatherd}
           - TZ=Europe/Paris
         command: ["/bin/bash", "/usr/local/bin/run-pynab.sh"]
         ports:

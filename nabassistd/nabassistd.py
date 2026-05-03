@@ -2,6 +2,8 @@ import asyncio
 import logging
 from typing import Optional
 
+from asgiref.sync import sync_to_async
+
 from nabcommon.nabservice import NabService
 from nabcommon.typing import NabdPacket
 from nabd.sound import Sound
@@ -38,7 +40,7 @@ class NabAssistd(NabService):
             self._build_pipeline()
 
     async def reload_config(self):
-        self.config = AssistConfig.load()
+        self.config = await sync_to_async(AssistConfig.load)()
         if self.config.enabled and self.sound is None:
             self.sound = _create_default_sound()
         if self.config.enabled:

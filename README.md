@@ -122,6 +122,7 @@ Voir le [protocole nabd](PROTOCOL.md)
 - `nabweatherd` : démon pour le service météo
 - `nabiftttd` : démon pour le service IFTTT
 - `nabassistd` : démon Home Assistant Assist Satellite
+- `nabhomeassistantd` : démon Home Assistant MQTT Discovery et contrôle
 - `nabweb` : interface web pour la configuration
 
 ## Contribution

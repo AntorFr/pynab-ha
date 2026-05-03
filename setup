@@ -245,7 +245,7 @@ sudo -u ${owner} ./rebar3 release
 echo "Running Pynab install script."
 sudo apt-get install --no-install-recommends -y alsa-utils xz-utils avahi-daemon
 cd ${inst_dir}/pynab
-sudo -u ${owner} /bin/bash install.sh ${install_env}
+sudo -u ${owner} PYNAB_INSTALL_ASSIST=${PYNAB_INSTALL_ASSIST:-0} /bin/bash install.sh ${install_env}
 
 echo "Cleaning up."
 # Cleanup caches.

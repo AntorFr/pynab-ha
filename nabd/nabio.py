@@ -2,7 +2,7 @@ import abc
 import asyncio
 import time
 from asyncio import Event
-from typing import Optional
+from typing import Any, Optional
 
 from .choreography import ChoreographyInterpreter
 from .ears import Ears
@@ -31,6 +31,7 @@ class NabIO(object, metaclass=abc.ABCMeta):
     def __init__(self):
         super().__init__()
         self.rfid: Optional[Rfid]
+        self.sound: Any
         self.cancel_event = Event()
 
     async def setup_ears(self, left_ear, right_ear):

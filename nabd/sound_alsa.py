@@ -108,6 +108,33 @@ class SoundAlsa(Sound):  # pragma: no cover
         """
         return self.sound_card
 
+    def get_volume(self):
+        if self.playback_mixer is None:
+            return None
+        volumes = self.playback_mixer.getvolume()
+        if not volumes:
+            return None
+        return int(round(sum(volumes) / len(volumes)))
+
+    def set_volume(self, volume):
+        if self.playback_mixer is None:
+            raise RuntimeError("Playback mixer is unavailable")
+        volume = max(0, min(100, int(volume)))
+        self.playback_mixer.setvolume(volume)
+
+    def get_muted(self):
+        if self.playback_mixer is None:
+            return None
+        muted = self.playback_mixer.getmute()
+        if not muted:
+            return None
+        return all(bool(value) for value in muted)
+
+    def set_muted(self, muted):
+        if self.playback_mixer is None:
+            raise RuntimeError("Playback mixer is unavailable")
+        self.playback_mixer.setmute(1 if muted else 0)
+
     def _play(self, filename):
         try:
             device = alsaaudio.PCM(device=self.playback_device)
