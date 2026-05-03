@@ -276,23 +276,11 @@ build_and_install_driver cr14 cr14
 echo "Installing RFID reader driver for 2022 NFC card."
 sudo mkdir -p ${inst_dir}/st25r391x
 sudo chown ${owner}:${group} ${inst_dir}/st25r391x
-sudo -u ${owner} git clone --depth 1 -b ${st25_branch} https://github.com/pguyot/st25r391x ${inst_dir}/st25r391x
+# AntorFr fork: kernel 6.0/6.1/6.4 API compat + Kbuild dtbo workaround
+# (pending upstream PR).
+sudo -u ${owner} git clone --depth 1 -b ${st25_branch} https://github.com/AntorFr/st25r391x ${inst_dir}/st25r391x
 sudo git config --system --add safe.directory ${inst_dir}/st25r391x
 cd ${inst_dir}/st25r391x
-# Fix unfixed upstream bug: <stdarg.h> was removed from the kernel include
-# path in Linux 5.15 (see pguyot/st25r391x#8).
-sudo -u ${owner} sed -i \
-    -e 's|^#include <stdarg.h>|#include <linux/stdarg.h>|' \
-    st25r391x_main.c
-# st25r391x has no system-dtc rule upstream, add one after stripping Kbuild's.
-strip_kbuild_dtbo
-sudo -u ${owner} tee -a Makefile > /dev/null <<'MAKEFILE_PATCH'
-
-all: st25r391x.dtbo
-
-st25r391x.dtbo: st25r391x-overlay.dts
-	dtc -I dts -O dtb -o $@ $<
-MAKEFILE_PATCH
 # st25r391x conflicts with cr14 and is later disabled below; pass empty
 # overlay name to skip the dtoverlay= check (the install: rule comments it).
 build_and_install_driver st25r391x ""
