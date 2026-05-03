@@ -123,12 +123,17 @@ Signed-By: /etc/apt/keyrings/davesteele-comitup.gpg
 EOF
     apt-get update -y
     apt-get install --no-install-recommends -y comitup comitup-watch
-    rm /etc/network/interfaces
-    systemctl mask dnsmasq.service
-    systemctl mask systemd-resolved.service
-    systemctl mask dhcpd.service
-    systemctl mask dhcpcd.service
-    systemctl mask wpa-supplicant.service
+    # On modern Raspberry Pi OS (Bookworm+), NetworkManager is the default and
+    # /etc/network/interfaces / dhcpcd / standalone wpa_supplicant no longer
+    # ship. We still mask any of these that happen to be present so they cannot
+    # fight comitup for control of the interface.
+    rm -f /etc/network/interfaces
+    for svc in dnsmasq.service systemd-resolved.service dhcpd.service \
+               dhcpcd.service wpa-supplicant.service; do
+        if systemctl list-unit-files "${svc}" --no-legend --no-pager | grep -q "${svc}"; then
+            systemctl mask "${svc}"
+        fi
+    done
     systemctl enable NetworkManager.service
     echo "web_service: nginx.service" >> /etc/comitup.conf
     echo "ap_name: Nabaztag-<nnn>" >> /etc/comitup.conf
