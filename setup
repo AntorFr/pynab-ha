@@ -225,8 +225,8 @@ build_and_install_driver() {
             echo "FATAL: ${overlay_name}.dtbo was not installed" >&2
             exit 1
         fi
-        if ! grep -qE "^dtoverlay=${overlay_name}([,$])" /boot/firmware/config.txt 2>/dev/null && \
-           ! grep -qE "^dtoverlay=${overlay_name}([,$])" /boot/config.txt 2>/dev/null; then
+        if ! grep -qE "^dtoverlay=${overlay_name}(,|$)" /boot/firmware/config.txt 2>/dev/null && \
+           ! grep -qE "^dtoverlay=${overlay_name}(,|$)" /boot/config.txt 2>/dev/null; then
             echo "FATAL: dtoverlay=${overlay_name} not present in config.txt" >&2
             exit 1
         fi
