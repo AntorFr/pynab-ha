@@ -107,10 +107,20 @@ cat /boot/config.txt | grep "dtoverlay=hifiberry-dac"
 
 if [ "${install_env}" == "ci-chroot" ]
 then
-    # Install comitup package for headless WiFi setup
-    wget https://davesteele.github.io/comitup/deb/davesteele-comitup-apt-source_1.2_all.deb
-    dpkg -i --force-all davesteele-comitup-apt-source_1.2_all.deb
-    rm davesteele-comitup-apt-source_1.2_all.deb
+    # Install comitup package for headless WiFi setup.
+    # Modern apt (Trixie+) requires the repo signing key in /etc/apt/keyrings
+    # and a deb822 source file pointing at it.
+    apt-get install --no-install-recommends -y curl gpg ca-certificates
+    install -d -m 0755 /etc/apt/keyrings
+    curl -fsSL https://davesteele.github.io/key-366150CE.pub.txt \
+        | gpg --dearmor -o /etc/apt/keyrings/davesteele-comitup.gpg
+    cat > /etc/apt/sources.list.d/davesteele-comitup.sources <<'EOF'
+Types: deb
+URIs: https://davesteele.github.io/comitup/repo
+Suites: comitup
+Components: main
+Signed-By: /etc/apt/keyrings/davesteele-comitup.gpg
+EOF
     apt-get update -y
     apt-get install --no-install-recommends -y comitup comitup-watch
     rm /etc/network/interfaces
