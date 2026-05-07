@@ -85,10 +85,17 @@ def probe_st25r391x():
         return False
 
 
+CONFIG_TXT = (
+    "/boot/firmware/config.txt"
+    if os.path.exists("/boot/firmware/config.txt")
+    else "/boot/config.txt"
+)
+
+
 def update_config_and_reboot(enabled, disabled):
     modified = False
     needs_enable = True
-    with open("/boot/config.txt", "r") as f:
+    with open(CONFIG_TXT, "r") as f:
         content = f.readlines()
         for ix in range(0, len(content)):
             line = content[ix]
@@ -102,11 +109,11 @@ def update_config_and_reboot(enabled, disabled):
                 content[ix] = f"#dtoverlay={disabled}\n"
                 modified = True
     if needs_enable:
-        with open("/boot/config.txt", "a") as f:
+        with open(CONFIG_TXT, "a") as f:
             f.write(f"\ndtoverlay={enabled}\n")
             f.flush()
     elif modified:
-        with open("/boot/config.txt", "w") as f:
+        with open(CONFIG_TXT, "w") as f:
             f.writelines(content)
             f.flush()
     if needs_enable or modified:

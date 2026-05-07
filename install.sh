@@ -254,6 +254,10 @@ if [ "${PYNAB_INSTALL_ASSIST:-0}" = "1" ]; then
   venv/bin/pip install --no-cache-dir -r requirements-assist.txt
 fi
 
+echo "Tuning PostgreSQL memory settings for Raspberry Pi."
+sudo sed -i 's/^shared_buffers = .*/shared_buffers = 32MB/' /etc/postgresql/*/main/postgresql.conf
+sudo sed -i 's/^max_connections = .*/max_connections = 30/' /etc/postgresql/*/main/postgresql.conf
+
 trust=`sudo grep local /etc/postgresql/*/main/pg_hba.conf | grep -cE '^local +all +all +trust' || echo -n ''`
 if [ $trust -ne 1 ]; then
   echo "Configuring PostgreSQL for trusted access"

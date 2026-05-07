@@ -15,7 +15,7 @@ paho-mqtt==2.1.0
 # Hardware-only runtime dependencies
 pyalsaaudio==0.11.0; sys_platform == "linux"
 rpi-ws281x==5.0.0; sys_platform == "linux" and ("armv6l" in platform_machine or "armv7l" in platform_machine or "aarch64" in platform_machine)
-RPi.GPIO==0.7.1; sys_platform == "linux" and ("armv6l" in platform_machine or "armv7l" in platform_machine or "aarch64" in platform_machine)
+rpi-lgpio>=0.6; sys_platform == "linux" and ("armv6l" in platform_machine or "armv7l" in platform_machine or "aarch64" in platform_machine)
 https://github.com/pguyot/pynfcdev/releases/download/v0.7.4/pynfcdev-0.7.4-py3-none-any.whl
 
 # Tests and quality
